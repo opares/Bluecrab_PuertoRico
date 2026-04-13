@@ -1,6 +1,6 @@
 # A Caribbean coastal lagoon serves as spawning habitat for multiple Callinectes spp.
 
-## Overview
+## Overviewn
 This repository contains data and code associated with the study:
 
 Pares, O., Stevens, B., & Schott, E. (2026). *A Caribbean coastal lagoon serves as spawning habitat for multiple Callinectes spp.: implications for fishery management.*
