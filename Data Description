@@ -1,0 +1,15 @@
+### Raw Data
+- Trap-level catch data
+- Individual crab measurements
+- Environmental data per station
+
+### Variables include:
+- Species ID
+- Sex
+- Carapace width (CWspines, CWbase)
+- Carapace length (CL)
+- Weight (g)
+- Reproductive state (ovigerous, prior spawn, ovary stage)
+- Station (1–4)
+- Quarter (2020–2021)
+- Environmental parameters (temperature, salinity, DO, pH, depth)
