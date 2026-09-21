@@ -1,0 +1,357 @@
+---
+title: "A Caribbean coastal lagoon serves as spawning habitat for multiple Callinectes spp."
+subtitle: "Revised analyses: environment, sex ratio, size, reproductive state"
+author: "Olivia Pares"
+date: "2026-09-20"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+#Setting up directory
+
+```{r}
+# setwd("~/Desktop/Repository for manuscript 1")
+```
+
+# Libraries
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(lme4)       # mixed models (glmer, lmer)
+library(lmerTest)   # F tests with Satterthwaite df for lmer
+library(emmeans)    # estimated marginal means and Tukey contrasts
+library(DHARMa)     # residual checks for mixed models
+```
+
+# Data Import
+
+Two files in data/clean/: one row per crab and one row per station x trap-day.
+Station codes: BC = Station 1, AP = Station 2, DY = Station 3, IM = Station 4.
+
+```{r}
+in_dir <- "data/clean"
+
+crabs  <- read.csv(file.path(in_dir, "crabdata_clean_2.csv"), stringsAsFactors = FALSE)
+events <- read.csv(file.path(in_dir, "sampling_events_final_clean_2.csv"), stringsAsFactors = FALSE)
+
+sapply(list(crabs = crabs, events = events), nrow)
+
+# Factors used in every model
+crabs <- crabs %>%
+  mutate(station = factor(station, levels = c("BC", "AP", "DY", "IM")),
+         survey  = factor(survey),
+         sex     = factor(sex),
+         ss      = interaction(station, survey, drop = TRUE))   # station-survey combination (20)
+
+# The four well-sampled species, in the order used in figures
+sp4 <- c("Callinectes sapidus", "Callinectes bocourti", "Callinectes similis", "Callinectes ornatus")
+crabs4 <- crabs %>% filter(species %in% sp4) %>% mutate(species = factor(species, levels = sp4))
+
+# Colour scheme (same as existing manuscript figures)
+pal_sex   <- c(F = "#F8766D", M = "#00BFC4")
+pal_repro <- c("Prior spawn" = "#A52A2A", "Ovigerous" = "#FFA501",
+               "Full ovaries" = "#FFC0CB", "Light/medium ovaries" = "#B3B3B3")
+```
+
+# Environmental parameters
+
+Readings from the 2-3 trap-days of each station-survey are averaged (one value per station per survey, n = 20), then analysed as a randomized complete block: Station as the factor of interest, Survey as the block.
+
+```{r}
+env <- events %>%
+  mutate(station = factor(station, levels = c("BC", "AP", "DY", "IM")), survey = factor(survey)) %>%
+  group_by(station, survey) %>%
+  summarise(across(c(temp_c, do_pct_sat, salinity_ppt, ph), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
+
+# Table 1: mean +/- SE across the five survey means for each station
+env %>% group_by(station) %>%
+  summarise(across(c(temp_c, do_pct_sat, salinity_ppt, ph),
+                   list(mean = ~ round(mean(.x), 1), se = ~ round(sd(.x) / sqrt(n()), 2))))
+```
+
+```{r}
+# Two-way ANOVA (station + survey), assumption checks, Tukey HSD, eta-squared, Friedman check
+for (v in c("temp_c", "do_pct_sat", "salinity_ppt", "ph")) {
+  m <- aov(as.formula(paste(v, "~ station + survey")), data = env)
+  a <- summary(m)[[1]]
+  cat("\n=====", v, "=====\n"); print(a)
+  cat("eta2 station =", round(a$`Sum Sq`[1] / sum(a$`Sum Sq`), 2),
+      " eta2 survey =", round(a$`Sum Sq`[2] / sum(a$`Sum Sq`), 2), "\n")
+  cat("Shapiro p =", round(shapiro.test(resid(m))$p.value, 3),
+      " Bartlett (station) p =", round(bartlett.test(resid(m) ~ env$station)$p.value, 3), "\n")
+  print(TukeyHSD(m))
+  cat("Friedman station p =", round(friedman.test(env[[v]], env$station, env$survey)$p.value, 3),
+      " survey p =", round(friedman.test(env[[v]], env$survey, env$station)$p.value, 3), "\n")
+}
+```
+
+# Temporal and Spatial Catch
+
+Same model as the original bluecrab_puertoRico.Rmd (GAMLSS, NBI, station + survey, AR1 by date within
+station-survey via re()), fitted to the 54 trap-day records in sampling_events_final_clean_2.csv.
+The original d1.csv had 53 rows and different species totals (98/129/43/37 vs 95/133/48/40 crabs).
+Note: random = ~1|lagoon is a single-level grouping used only to carry the AR1 structure; it is not a
+station-survey random intercept.
+
+```{r}
+library(gamlss)   # Rigby & Stasinopoulos 2005; re() calls nlme (Pinheiro & Bates 2000)
+
+d1 <- events %>%
+  transmute(Date = as.Date(date_catch, format = "%m/%d/%y"),
+            Station = factor(station, levels = c("BC", "AP", "DY", "IM")),
+            Year_Month = factor(survey), lagoon = factor("lagoon"),
+            sq = factor(paste(survey, station, sep = ".")),
+            cpue.sap = n_sapidus, cpue.boc = n_bocourti, cpue.sim = n_similis, cpue.orn = n_ornatus,
+            cpue.lar = n_larvatus, cpue.exa = n_exasperatus) %>%
+  mutate(total_catch = cpue.sap + cpue.boc + cpue.sim + cpue.orn + cpue.lar + cpue.exa) %>%
+  as.data.frame()
+
+fit_catch <- function(resp) {
+  f <- as.formula(paste0(resp, " ~ re(fixed = ~ Year_Month + Station, random = ~1|lagoon,
+                          correlation = corAR1(form = ~ Date | lagoon/sq), method = 'REML')"))
+  m <- gamlss(f, family = NBI(), data = d1, trace = FALSE)
+  plot(m)                       # normalized quantile residuals
+  anova(getSmo(m))              # Wald-type F tests (Table 2; intercept row not reported)
+}
+for (r in c("total_catch", "cpue.sap", "cpue.boc", "cpue.sim", "cpue.orn")) { cat("\n==", r, "==\n"); print(fit_catch(r)) }
+```
+
+## Figs. 2 and 3: catch (mean +/- SE per trap-day) by survey and by station
+
+```{r}
+pal_species <- c("Callinectes sapidus" = "#72874E", "Callinectes bocourti" = "#FED789",
+                 "Callinectes similis" = "#476F84", "Callinectes ornatus" = "#023742")
+catch_long <- events %>%
+  transmute(survey, station = factor(station, levels = c("BC", "AP", "DY", "IM")),
+            `Callinectes sapidus` = n_sapidus, `Callinectes bocourti` = n_bocourti,
+            `Callinectes similis` = n_similis, `Callinectes ornatus` = n_ornatus) %>%
+  tidyr::pivot_longer(-c(survey, station), names_to = "species", values_to = "catch") %>%
+  mutate(species = factor(species, levels = sp4),
+         station = factor(as.integer(station), labels = paste("Station", 1:4)))
+
+se <- function(x) sd(x) / sqrt(length(x))
+fig2 <- catch_long %>% group_by(species, survey) %>% summarise(m = mean(catch), se = se(catch), .groups = "drop") %>%
+  ggplot(aes(survey, m, fill = species)) +
+  geom_col(position = position_dodge(0.8), width = 0.75, colour = "grey20", linewidth = 0.25) +
+  geom_errorbar(aes(ymin = m - se, ymax = m + se), position = position_dodge(0.8), width = 0.25) +
+  scale_fill_manual(values = pal_species, name = NULL, labels = function(x) gsub("Callinectes", "C.", x)) +
+  labs(x = "Survey", y = "Catch (crabs per station per trap-day)") +
+  theme_minimal(base_size = 11) + theme(legend.position = "bottom", legend.text = element_text(face = "italic"))
+fig3 <- catch_long %>% group_by(species, station) %>% summarise(m = mean(catch), se = se(catch), .groups = "drop") %>%
+  ggplot(aes(station, m, fill = species)) +
+  geom_col(position = position_dodge(0.8), width = 0.75, colour = "grey20", linewidth = 0.25) +
+  geom_errorbar(aes(ymin = m - se, ymax = m + se), position = position_dodge(0.8), width = 0.25) +
+  scale_fill_manual(values = pal_species, name = NULL, labels = function(x) gsub("Callinectes", "C.", x)) +
+  labs(x = "Station", y = "Catch (crabs per station per trap-day)") +
+  theme_minimal(base_size = 11) + theme(legend.position = "bottom", legend.text = element_text(face = "italic"))
+fig2; fig3
+ggsave("figures/Figure_2_catch_by_survey.png", fig2, width = 7.5, height = 4.5, dpi = 300)
+ggsave("figures/Figure_3_catch_by_station.png", fig3, width = 7.5, height = 4.5, dpi = 300)
+```
+
+# Sex Ratio
+
+Overall proportion of males for each species: binomial GLMM with no covariates and a random intercept for station-survey combination. The intercept is the log-odds of a crab being male; a 1:1 ratio corresponds to an intercept of zero (Wald z test).
+
+```{r}
+sexdat <- crabs4 %>% filter(sex %in% c("F", "M")) %>% mutate(male = as.integer(sex == "M"))
+
+# Raw counts (Table X, pooled columns)
+sexdat %>% group_by(species) %>%
+  summarise(n = n(), males = sum(male), females = n - males, prop_male = round(males / n, 3))
+```
+
+```{r}
+# One GLMM per species
+for (sp in sp4) {
+  d <- filter(sexdat, species == sp)
+  m <- glmer(male ~ 1 + (1 | ss), family = binomial, data = d, control = glmerControl(optimizer = "bobyqa"))
+  b <- fixef(m)[[1]]; se <- sqrt(vcov(m)[1, 1]); z <- b / se
+  cat(sprintf("\n%s: prop male = %.3f (95%% CI %.3f-%.3f), z = %.2f, p = %.2g, station-survey SD = %.2f\n",
+              sp, plogis(b), plogis(b - 1.96 * se), plogis(b + 1.96 * se), z, 2 * pnorm(-abs(z)),
+              as.data.frame(VarCorr(m))$sdcor[1]))
+  sim <- simulateResiduals(m, n = 1000)
+  cat("  DHARMa uniformity p =", round(testUniformity(sim, plot = FALSE)$p.value, 2),
+      " dispersion p =", round(testDispersion(sim, plot = FALSE)$p.value, 2), "\n")
+}
+# C. ornatus: only 2 males, both at one station -> report the pooled proportion with an exact CI instead
+binom.test(2, 40)$conf.int
+```
+
+## Sex ratio by station and by survey (Fisher's exact test)
+
+```{r}
+for (sp in sp4) {
+  d <- filter(sexdat, species == sp)
+  cat("\n", sp, "\n")
+  cat("  station: Fisher p =", signif(fisher.test(table(d$station, d$sex))$p.value, 3), "\n")
+  cat("  survey : Fisher p =", signif(fisher.test(table(d$survey,  d$sex))$p.value, 3), "\n")
+}
+```
+
+# Size
+
+## Size-frequency distributions (Fig. 5)
+
+```{r}
+sizedat <- crabs4 %>% filter(sex %in% c("F", "M"), !is.na(cw_spines_mm)) %>%
+  mutate(group = case_when(maturity_coded == "immature" ~ "Immature",
+                           sex == "F" ~ "Female", TRUE ~ "Male"),
+         group = factor(group, levels = c("Immature", "Male", "Female"))) %>%
+  group_by(species) %>%
+  mutate(panel = sprintf("%s  (n = %d; %d immature)", sub("Callinectes", "C.", species), n(), sum(group == "Immature"))) %>%
+  ungroup() %>% mutate(panel = factor(panel, levels = unique(panel[order(species)])))
+
+fig6 <- ggplot(sizedat, aes(cw_spines_mm, fill = group)) +
+  geom_histogram(binwidth = 5, boundary = 0, colour = "grey20", linewidth = 0.25) +
+  scale_fill_manual(values = c(Female = pal_sex[["F"]], Male = pal_sex[["M"]], Immature = "white"),
+                    breaks = c("Female", "Male", "Immature"), name = NULL) +
+  scale_x_continuous(breaks = seq(40, 160, 20), limits = c(40, 165)) +
+  scale_y_continuous(breaks = function(l) seq(0, floor(l[2]), by = ifelse(l[2] > 15, 5, 2))) +
+  facet_wrap(~ panel, ncol = 2, scales = "free_y") +
+  labs(x = "Carapace width (mm)", y = "Number of crabs") +
+  theme_minimal(base_size = 11) +
+  theme(strip.text = element_text(face = "bold.italic", hjust = 0), legend.position = "bottom")
+fig6
+ggsave("figures/Figure_5_size_frequency.png", fig6, width = 7, height = 5.5, dpi = 300)
+```
+
+## Carapace width by sex, station and survey (C. sapidus and C. bocourti)
+
+Linear mixed model per species: CW ~ sex + station + survey + (1 | station-survey). Three immature C. sapidus (43-72 mm) violated assumptions, so crabs >= 75 mm are used; no C. bocourti are affected.
+
+```{r}
+adults <- sizedat %>% filter(cw_spines_mm >= 75, species %in% sp4[1:2])
+
+for (sp in sp4[1:2]) {
+  dat <- filter(adults, species == sp)
+  m   <- lmer(cw_spines_mm ~ sex + station + survey + (1 | ss), data = dat)
+  cat("\n=====", sp, " n =", nrow(dat), "=====\n")
+  print(VarCorr(m))
+  print(anova(m, type = 2))                       # Satterthwaite F tests
+  cat("Shapiro p =", signif(shapiro.test(resid(m))$p.value, 2), "\n")
+  print(emmeans(m, ~ sex));  print(emmeans(m, ~ station));  print(emmeans(m, ~ survey))
+  print(pairs(emmeans(m, ~ survey), adjust = "tukey"))
+}
+```
+
+# Reproductive State
+
+Each mature female is assigned one state (priority order): Ovigerous > Prior spawn > Full ovaries > Light/medium ovaries. Spawning-capable = the first three (Ogburn and Habegger, 2015).
+
+```{r}
+fem <- crabs4 %>%
+  filter(sex == "F", is.na(maturity_coded) | maturity_coded != "immature") %>%
+  mutate(state = case_when(ovigerous == "Y" ~ "Ovigerous",
+                           prior_spawn == "Y" ~ "Prior spawn",
+                           ovary_stage == "full" ~ "Full ovaries",
+                           ovary_stage %in% c("light", "medium") ~ "Light/medium ovaries",
+                           TRUE ~ NA_character_)) %>%
+  filter(!is.na(state)) %>%                      # 6 females not dissected (field time) are dropped here
+  mutate(state = factor(state, levels = names(pal_repro)),
+         capable = state != "Light/medium ovaries",
+         ovig    = state == "Ovigerous")
+
+table(fem$species)
+```
+
+## Fig. 6: reproductive state by survey
+
+```{r}
+comp <- fem %>% count(species, survey, state) %>%
+  group_by(species, survey) %>% mutate(n_total = sum(n), prop = n / n_total) %>% ungroup()
+
+figX <- ggplot(comp, aes(survey, prop, fill = state)) +
+  geom_col(colour = "grey20", linewidth = 0.25, width = 0.75) +
+  geom_text(data = distinct(comp, species, survey, n_total), aes(survey, 1.04, label = n_total),
+            inherit.aes = FALSE, size = 3) +
+  facet_wrap(~ species, ncol = 2) +
+  scale_fill_manual(values = pal_repro, name = "Female reproductive state") +
+  scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0, 0.08))) +
+  labs(x = "Survey", y = "Proportion of mature females") +
+  theme_minimal(base_size = 11) +
+  theme(strip.text = element_text(face = "bold.italic"), legend.position = "bottom")
+figX
+ggsave("figures/Figure_6_reproductive_state_by_survey.png", figX, width = 7.5, height = 6, dpi = 300)
+```
+
+## Table 5: proportion ovigerous and spawning-capable, with exact 95% CI
+
+```{r}
+ci <- function(k, n) binom.test(k, n)$conf.int
+tabX <- fem %>% group_by(species, survey) %>%
+  summarise(n = n(), k_ovig = sum(ovig), k_cap = sum(capable), .groups = "drop") %>%
+  rowwise() %>%
+  mutate(p_ovig = k_ovig / n, ovig_lo = ci(k_ovig, n)[1], ovig_hi = ci(k_ovig, n)[2],
+         p_cap  = k_cap  / n, cap_lo  = ci(k_cap,  n)[1], cap_hi  = ci(k_cap,  n)[2]) %>%
+  ungroup()
+print(as.data.frame(tabX), digits = 2)
+write.csv(tabX, "data/analysis_ready/table5_reproductive_state_by_survey.csv", row.names = FALSE)
+```
+
+## Fig. S3: proportions with confidence intervals (bar chart)
+
+```{r}
+long <- bind_rows(
+  tabX %>% transmute(species, survey, n, measure = "Spawning-capable", p = p_cap,  lo = cap_lo,  hi = cap_hi),
+  tabX %>% transmute(species, survey, n, measure = "Ovigerous",        p = p_ovig, lo = ovig_lo, hi = ovig_hi)) %>%
+  mutate(measure = factor(measure, levels = c("Spawning-capable", "Ovigerous")))
+n_lab <- distinct(long, species, survey, n)
+
+figY <- ggplot(long, aes(survey, p, fill = measure)) +
+  geom_col(position = position_dodge(width = 0.75), width = 0.7, colour = "grey20", linewidth = 0.3) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), position = position_dodge(width = 0.75),
+                width = 0.25, linewidth = 0.4, colour = "grey20") +
+  geom_text(data = n_lab, aes(survey, -0.08, label = paste0("n = ", n)),
+            inherit.aes = FALSE, colour = "grey30", size = 2.6) +
+  facet_wrap(~ species, nrow = 1, drop = FALSE) +
+  scale_fill_manual(values = c("Spawning-capable" = pal_repro[["Prior spawn"]], "Ovigerous" = pal_repro[["Ovigerous"]]), name = NULL) +
+  scale_x_discrete(drop = FALSE) +
+  scale_y_continuous(limits = c(-0.12, 1.02), breaks = seq(0, 1, 0.25)) +
+  labs(x = "Survey", y = "Proportion of mature females") +
+  theme_bw(base_size = 11) +
+  theme(strip.text = element_text(face = "italic"), legend.position = "bottom",
+        panel.grid.minor = element_blank(), panel.grid.major.x = element_blank())
+figY
+ggsave("figures/Figure_S3_reproductive_proportions_CI.png", figY, width = 9.5, height = 4.2, dpi = 300)
+```
+
+## Tests among surveys
+
+```{r}
+for (sp in sp4) {
+  d <- filter(fem, species == sp) %>% droplevels()
+  cat("\n=====", sp, " n =", nrow(d), "=====\n")
+  t_ov <- table(d$survey, d$ovig);    t_ov <- t_ov[rowSums(t_ov) > 0, , drop = FALSE]
+  t_cp <- table(d$survey, d$capable); t_cp <- t_cp[rowSums(t_cp) > 0, , drop = FALSE]
+  cat("Fisher ovigerous x survey p =", if (ncol(t_ov) > 1) signif(fisher.test(t_ov)$p.value, 2) else "no variation", "\n")
+  cat("Fisher capable   x survey p =", if (ncol(t_cp) > 1) signif(fisher.test(t_cp)$p.value, 2) else "no variation", "\n")
+  # GLMM check for the station-survey structure (skipped when the response does not vary)
+  if (length(unique(d$capable)) > 1) {
+    m1 <- glmer(capable ~ survey + (1 | ss), family = binomial, data = d, control = glmerControl(optimizer = "bobyqa"))
+    m0 <- glmer(capable ~ 1      + (1 | ss), family = binomial, data = d, control = glmerControl(optimizer = "bobyqa"))
+    a  <- anova(m0, m1)
+    cat("GLMM LRT survey: chi2(", a$Df[2], ") =", round(a$Chisq[2], 2), " p =", signif(a$`Pr(>Chisq)`[2], 2),
+        "| station-survey SD =", round(as.data.frame(VarCorr(m1))$sdcor[1], 2), "\n")
+  }
+}
+```
+
+## Table S3: sensitivity to the definition of spawning-capable
+
+```{r}
+for (sp in sp4) {
+  d <- filter(fem, species == sp)
+  t1 <- table(d$survey, d$state %in% c("Ovigerous", "Full ovaries")); t1 <- t1[rowSums(t1) > 0, , drop = FALSE]
+  d2 <- filter(d, maturity_coded == "mature")
+  t2 <- table(d2$survey, d2$capable); t2 <- t2[rowSums(t2) > 0, , drop = FALSE]
+  cat(sp, ": prior spawn excluded p =", if (ncol(t1) > 1) signif(fisher.test(t1)$p.value, 2) else "no variation",
+      "| recorded-mature only (n =", nrow(d2), ") p =", if (ncol(t2) > 1) signif(fisher.test(t2)$p.value, 2) else "no variation", "\n")
+}
+```
+
+# Length-weight relationship
+
+Unchanged from the previous version of this script (see bluecrab_puertoRico.Rmd, section "Length-weight relationship").
