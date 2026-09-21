@@ -27,7 +27,7 @@ Everything is inside Bluecrab_PuertoRico_submission_Final_Revised/:
 code/
   bluecrab_puertoRico_revised.Rmd     all analyses in the paper, in manuscript order
   make_analysis_ready.R               builds data/analysis_ready/ from data/clean/
-  fig_S3_bars.R                       Fig. S3 (bar version)
+  fig_S3_bars.R                       Fig. S3 
   standalone_scripts/
     catch_model_check.R               catch GAMLSS refitted on the clean data (Table 2)
     sex_ratio_analysis.R              binomial GLMM + Fisher tests (Tables 3–4)
