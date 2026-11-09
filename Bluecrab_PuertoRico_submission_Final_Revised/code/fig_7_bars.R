@@ -1,8 +1,8 @@
-# Fig. S3 (bar version): proportion of mature females ovigerous / spawning-capable
-# per survey, with exact binomial 95% CI. Reads the analysis-ready Table 5 file.
+# Fig. 7 (bar version): proportion of mature females ovigerous / spawning-capable
+# per survey, with exact binomial 95% CI. Reads the analysis-ready Table S3 file.
 library(dplyr); library(tidyr); library(ggplot2)
 
-tab <- read.csv("data/analysis_ready/table5_reproductive_state_by_survey.csv")
+tab <- read.csv("data/analysis_ready/tableS3_reproductive_state_by_survey.csv")
 
 survey_lab <- c("2020-10" = "Oct\n2020", "2021-01" = "Jan\n2021", "2021-04" = "Apr\n2021",
                 "2021-07" = "Jul\n2021", "2021-10" = "Oct\n2021")
@@ -39,4 +39,4 @@ p <- ggplot(long, aes(survey, p, fill = measure)) +
         panel.grid.minor = element_blank(),
         panel.grid.major.x = element_blank())
 
-ggsave("figures/Figure_S3_reproductive_proportions_CI.png", p, width = 9.5, height = 4.2, dpi = 300)
+ggsave("figures/Figure_7_reproductive_proportions_CI.png", p, width = 9.5, height = 4.2, dpi = 300)

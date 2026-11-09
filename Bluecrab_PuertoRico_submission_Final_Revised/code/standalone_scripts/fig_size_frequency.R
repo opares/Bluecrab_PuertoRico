@@ -31,5 +31,5 @@ p <- ggplot(crabs, aes(cw_spines_mm, fill = group)) +
   theme(strip.background = element_blank(), strip.text = element_text(face = "italic", hjust = 0),
         legend.position = "top", legend.justification = "left", panel.grid.major.y = element_line(colour = "grey92"))
 
-ggsave("Fig6_size_frequency.png", p, width = 7, height = 5.5, dpi = 300)
-ggsave("Fig6_size_frequency.pdf", p, width = 7, height = 5.5)
+ggsave("Figure_4_size_frequency.png", p, width = 7, height = 5.5, dpi = 300)
+ggsave("Figure_4_size_frequency.pdf", p, width = 7, height = 5.5)
