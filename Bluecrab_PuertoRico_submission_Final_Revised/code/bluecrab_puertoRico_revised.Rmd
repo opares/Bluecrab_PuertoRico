@@ -1,5 +1,5 @@
 ---
-title: "A Caribbean coastal lagoon serves as spawning habitat for multiple Callinectes spp."
+title: "A Caribbean coastal lagoon serves as reproductive habitat for multiple Callinectes spp.: knowledge for fishery management"
 subtitle: "Revised analyses: environment, sex ratio, size, reproductive state"
 author: "Olivia Pares"
 date: "2026-09-20"
@@ -193,7 +193,7 @@ for (sp in sp4) {
 
 # Size
 
-## Size-frequency distributions (Fig. 5)
+## Size-frequency distributions (Fig. 4)
 
 ```{r}
 sizedat <- crabs4 %>% filter(sex %in% c("F", "M"), !is.na(cw_spines_mm)) %>%
@@ -215,7 +215,7 @@ fig6 <- ggplot(sizedat, aes(cw_spines_mm, fill = group)) +
   theme_minimal(base_size = 11) +
   theme(strip.text = element_text(face = "bold.italic", hjust = 0), legend.position = "bottom")
 fig6
-ggsave("figures/Figure_5_size_frequency.png", fig6, width = 7, height = 5.5, dpi = 300)
+ggsave("figures/Figure_4_size_frequency.png", fig6, width = 7, height = 5.5, dpi = 300)
 ```
 
 ## Carapace width by sex, station and survey (C. sapidus and C. bocourti)
@@ -277,7 +277,7 @@ figX
 ggsave("figures/Figure_6_reproductive_state_by_survey.png", figX, width = 7.5, height = 6, dpi = 300)
 ```
 
-## Table 5: proportion ovigerous and spawning-capable, with exact 95% CI
+## Table S3: proportion ovigerous and spawning-capable, with exact 95% CI
 
 ```{r}
 ci <- function(k, n) binom.test(k, n)$conf.int
@@ -288,10 +288,10 @@ tabX <- fem %>% group_by(species, survey) %>%
          p_cap  = k_cap  / n, cap_lo  = ci(k_cap,  n)[1], cap_hi  = ci(k_cap,  n)[2]) %>%
   ungroup()
 print(as.data.frame(tabX), digits = 2)
-write.csv(tabX, "data/analysis_ready/table5_reproductive_state_by_survey.csv", row.names = FALSE)
+write.csv(tabX, "data/analysis_ready/tableS3_reproductive_state_by_survey.csv", row.names = FALSE)
 ```
 
-## Fig. S3: proportions with confidence intervals (bar chart)
+## Fig. 7: proportions with confidence intervals (bar chart)
 
 ```{r}
 long <- bind_rows(
@@ -315,7 +315,7 @@ figY <- ggplot(long, aes(survey, p, fill = measure)) +
   theme(strip.text = element_text(face = "italic"), legend.position = "bottom",
         panel.grid.minor = element_blank(), panel.grid.major.x = element_blank())
 figY
-ggsave("figures/Figure_S3_reproductive_proportions_CI.png", figY, width = 9.5, height = 4.2, dpi = 300)
+ggsave("figures/Figure_7_reproductive_proportions_CI.png", figY, width = 9.5, height = 4.2, dpi = 300)
 ```
 
 ## Tests among surveys
@@ -339,7 +339,7 @@ for (sp in sp4) {
 }
 ```
 
-## Table S3: sensitivity to the definition of spawning-capable
+## Sensitivity to the definition of spawning-capable (checked; not reported as a table in the paper)
 
 ```{r}
 for (sp in sp4) {
