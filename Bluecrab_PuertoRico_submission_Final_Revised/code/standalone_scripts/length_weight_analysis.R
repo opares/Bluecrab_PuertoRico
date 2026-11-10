@@ -60,8 +60,13 @@ sap_f <- filter(sap, sex == "F")
 lw_sap_f <- lm(logW ~ logL, data = sap_f)
 power_params(lw_sap_f)
 
-#    Stable across surveys? (survey and logL:survey rows not significant)
-Anova(lm(logW ~ logL * survey, data = sap_f))
+#    Within each sex: does the length-weight relationship differ among
+#    surveys or stations? (intercepts: survey, station; slopes: logL:survey,
+#    logL:station). Too few C. sapidus males (n = 12) to fit this model.
+boc_m <- filter(boc, sex == "M")
+Anova(lm(logW ~ logL * survey + logL * station, data = sap_f))
+Anova(lm(logW ~ logL * survey + logL * station, data = filter(boc, sex == "F")))
+Anova(lm(logW ~ logL * survey + logL * station, data = boc_m))
 
 # 4. Carapace width-weight relationship of mature non-ovigerous females (Fig. 9)
 #    Paper: C. sapidus logCW x survey F(4,51) = 0.36, p = 0.83; a = 0.00020, b = 2.73
