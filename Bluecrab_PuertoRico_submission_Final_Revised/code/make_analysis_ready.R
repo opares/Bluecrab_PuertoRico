@@ -16,7 +16,7 @@ crabs %>% filter(species %in% sp4, sex %in% c("F", "M")) %>%
   transmute(crab_id, species, station, survey, station_survey = paste(station, survey, sep = "_"), sex, male = as.integer(sex == "M")) %>%
   write.csv(file.path(out, "sexratio_crabs.csv"), row.names = FALSE)
 
-# 3. Size: crabs >= 75 mm CW of C. sapidus and C. bocourti (Section 2.5.3), plus all measured crabs for Fig. 5
+# 3. Size: crabs >= 75 mm CW of C. sapidus and C. bocourti (Section 2.5.3), plus all measured crabs for Fig. 4
 crabs %>% filter(species %in% sp4, sex %in% c("F", "M"), !is.na(cw_spines_mm)) %>%
   transmute(crab_id, species, station, survey, station_survey = paste(station, survey, sep = "_"), sex, maturity_coded, cw_spines_mm) %>%
   write.csv(file.path(out, "size_all_measured_crabs.csv"), row.names = FALSE)
