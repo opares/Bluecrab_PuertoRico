@@ -32,7 +32,8 @@ code/
     sex_ratio_analysis.R              binomial GLMM + Fisher tests (Tables 3–4)
     size_analysis.R                   size-frequency and carapace-width LMM (Fig. 4)
     reproductive_state_analysis.R     reproductive state by survey (Fig. 6, Fig. 7, Table S3)
-    length_weight_analysis.R          weight–length and width–weight models (Section 3.6, Figs. 8–9)
+    length_weight_analysis.R          weight–length and width–weight models (Section 3.6)
+    fig_length_weight.R               Figs. 8 and 9 (same data and filters as length_weight_analysis.R)
     fig_size_frequency.R              Fig. 4
 data/
   clean/                              one row per crab / one row per sampling event
@@ -79,7 +80,7 @@ reproduces every analysis in the order of the paper:
 3. sex ratio (binomial GLMM and Fisher's exact tests)
 4. size (size-frequency distributions and linear mixed model)
 5. reproductive state (exact binomial CIs, Fisher's exact tests, binomial GLMM, sensitivity table)
-6.  weight–length relationships — see code/standalone_scripts/length_weight_analysis.R (Section 3.6, Figs. 8–9).
+6.  weight–length relationships — see code/standalone_scripts/length_weight_analysis.R (Section 3.6) and fig_length_weight.R (Figs. 8–9).
 
 Figures are written to figures/.
 
@@ -106,7 +107,7 @@ figures/ contains the nine main-text figures, numbered as in the manuscript:
 | Figure_5_sex_ratio_by_station | Fig. 5 — sex ratio by station |
 | Figure_6_reproductive_state_by_survey | Fig. 6 — reproductive state by survey |
 | Figure_7_reproductive_proportions_CI | Fig. 7 — proportion ovigerous / spawning-capable with 95% CI |
-| Figure_8_L-W_relationship_M_F | Fig. 8 — length–weight relationships by sex |
+| Figure_8_L-W_relationship_M_F | Fig. 8 — length–weight relationships by sex (panels A and B; also as Figure_8A_sapidus and Figure_8B_bocourti) |
 | Figure_9_CW_Weight_Female_sap | Fig. 9 — carapace width–weight, female C. sapidus |
 | Figure_S1_catch_per_trap | Fig. S1 — catch per trap |
 | Figure_S2_Occurrence | Fig. S2 — occurrence |
