@@ -354,4 +354,4 @@ for (sp in sp4) {
 
 # Length-weight relationship
 
-Unchanged from the previous version of this script (see bluecrab_puertoRico.Rmd, section "Length-weight relationship").
+See code/standalone_scripts/length_weight_analysis.R, which reproduces every statistic in Section 3.6 from data/analysis_ready/weight_length_crabs.csv.
