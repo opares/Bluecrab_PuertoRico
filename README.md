@@ -32,6 +32,7 @@ code/
     sex_ratio_analysis.R              binomial GLMM + Fisher tests (Tables 3–4)
     size_analysis.R                   size-frequency and carapace-width LMM (Fig. 4)
     reproductive_state_analysis.R     reproductive state by survey (Fig. 6, Fig. 7, Table S3)
+    length_weight_analysis.R          weight–length and width–weight models (Section 3.6, Figs. 8–9)
     fig_size_frequency.R              Fig. 4
 data/
   clean/                              one row per crab / one row per sampling event
@@ -67,6 +68,7 @@ size_all_measured_crabs.csv	Carapace width of every measured crab — Fig. 4, Ta
 size_lmm_crabs_ge75mm.csv	Crabs ≥ 75 mm CW used in the carapace-width mixed model — Section 3.3
 females_reproductive_state.csv	245 mature females of the four species with reproductive state — Fig. 6, Fig. 7, Table S3
 tableS3_reproductive_state_by_survey.csv	Proportion ovigerous / spawning-capable per species and survey with exact 95% CI — Table S3, Fig. 7
+weight_length_crabs.csv	Size records of the four species as used in the weight–length models, with the original maturity and ovigerous codes and crab_id — Section 3.6, Figs. 8–9 (not built by make_analysis_ready.R)
 table2_catch_model_refit.csv	Wald F tests from the catch GAMLSS fitted to the 54 clean events (clean events (54 rows); Table 2) alongside the fit to a superseded 53-row dataset, kept to document the change
 Code
 
@@ -77,7 +79,7 @@ reproduces every analysis in the order of the paper:
 3. sex ratio (binomial GLMM and Fisher's exact tests)
 4. size (size-frequency distributions and linear mixed model)
 5. reproductive state (exact binomial CIs, Fisher's exact tests, binomial GLMM, sensitivity table)
-6.  weight–length relationships (Figs. 8–9; code to be added — see note below).
+6.  weight–length relationships — see code/standalone_scripts/length_weight_analysis.R (Section 3.6, Figs. 8–9).
 
 Figures are written to figures/.
 
@@ -114,6 +116,6 @@ Six females were not dissected because field time ran out; they are retained in 
 Seven crabs were recorded as immature; maturity was not recorded for 63 crabs.
 Sonde readings are missing for AP and IM on 20 Jan 2021, pH for DY on 20 Oct 2020, and the whole cast for BC on 15 Oct 2021 (see qc_flags).
 Raw field datasheets are available from the corresponding author on request.
-Weight–length analyses (Section 3.6, Figs. 8–9): the script for these models is being added to code/; until then it is available from the corresponding author on request.
+CR306 (C. sapidus female, 14 Oct 2021, AP) has a recorded spine-to-spine width of 160.89 mm, which is implausible for its 52.2 mm carapace length and 76.1 g weight; the weight–length script sets this width to NA and keeps the crab's length and weight.
 
 
