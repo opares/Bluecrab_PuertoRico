@@ -27,7 +27,7 @@ crabs %>% filter(species %in% sp4[1:2], sex %in% c("F", "M"), !is.na(cw_spines_m
 # 4. Reproductive state: one row per classified mature female (Section 2.5.5)
 crabs %>% filter(species %in% sp4, sex == "F", repro_state != "") %>%
   transmute(crab_id, species, station, survey, station_survey = paste(station, survey, sep = "_"),
-            maturity_coded, ovigerous, prior_spawn, ovary_stage, repro_state, spawning_capable) %>%
+            maturity_coded, maturity_source, ovigerous, prior_spawn, ovary_stage, repro_state, spawning_capable) %>%
   write.csv(file.path(out, "females_reproductive_state.csv"), row.names = FALSE)
 
 # 5. Count tables behind Tables 3 and 4

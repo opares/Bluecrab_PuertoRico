@@ -345,7 +345,7 @@ for (sp in sp4) {
 for (sp in sp4) {
   d <- filter(fem, species == sp)
   t1 <- table(d$survey, d$state %in% c("Ovigerous", "Full ovaries")); t1 <- t1[rowSums(t1) > 0, , drop = FALSE]
-  d2 <- filter(d, maturity_coded == "mature")
+  d2 <- filter(d, maturity_source == "recorded")   # maturity recorded in the field
   t2 <- table(d2$survey, d2$capable); t2 <- t2[rowSums(t2) > 0, , drop = FALSE]
   cat(sp, ": prior spawn excluded p =", if (ncol(t1) > 1) signif(fisher.test(t1)$p.value, 2) else "no variation",
       "| recorded-mature only (n =", nrow(d2), ") p =", if (ncol(t2) > 1) signif(fisher.test(t2)$p.value, 2) else "no variation", "\n")
