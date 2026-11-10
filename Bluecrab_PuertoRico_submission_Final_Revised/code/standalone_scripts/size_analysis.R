@@ -11,6 +11,11 @@
 #     CW ~ sex + station + survey + (1 | station:survey)
 # Sex is included because the sex ratio differs among stations (Section 3.4)
 # and the sexes differ in size, so station effects must be adjusted for sex.
+# For C. sapidus the random intercept is estimated at zero, so the final model
+# for that species is the same model without it (see section 4).
+#
+# CR306 (C. sapidus female, 14 Oct 2021): its recorded spine width (160.89 mm)
+# was a recording error and is blank in data/clean/; the crab has no CW here.
 # =============================================================================
 
 library(dplyr)
@@ -75,15 +80,28 @@ for (sp in levels(crabs$species)) {
   m   <- lmer(cw_spines_mm ~ sex + station + survey + (1 | ss), data = dat)
   cat("\n=====", sp, "(>= 75 mm, n =", nobs(m), ") =====\n")
   print(VarCorr(m))
-  print(anova(m, type = 2))
-  cat("Shapiro-Wilk p =", signif(shapiro.test(resid(m))$p.value, 2), "\n")
   print(ranova(m))                                         # LRT for the random intercept
+
+  if (sp == "Callinectes sapidus") {
+    # The station-survey random intercept is estimated at or near zero for
+    # C. sapidus (LRT p = 0.95), and the Satterthwaite (and Kenward-Roger)
+    # denominator df are then unstable. The model is refitted without it.
+    m <- lm(cw_spines_mm ~ sex + station + survey, data = dat)
+    print(car::Anova(m, type = 2))
+  } else {
+    print(anova(m, type = 2))
+  }
+  cat("Shapiro-Wilk p =", signif(shapiro.test(resid(m))$p.value, 2), "\n")
   cat("\nEstimated marginal means (mm):\n")
-  print(emmeans(m, ~ sex,     lmer.df = "satterthwaite"))
-  print(emmeans(m, ~ station, lmer.df = "satterthwaite"))
-  print(emmeans(m, ~ survey,  lmer.df = "satterthwaite"))
+  print(emmeans(m, ~ sex))
+  print(emmeans(m, ~ station))
+  print(emmeans(m, ~ survey))
   cat("\nTukey pairwise, survey:\n")
-  print(pairs(emmeans(m, ~ survey, lmer.df = "satterthwaite"), adjust = "tukey"))
+  print(pairs(emmeans(m, ~ survey), adjust = "tukey"))
+  cat("\nRaw mean +- SE (mm) by sex and by survey:\n")
+  for (g in c("sex", "survey")) print(dat %>% group_by(.data[[g]]) %>%
+    summarise(n = n(), mean = round(mean(cw_spines_mm), 1),
+              se = round(sd(cw_spines_mm) / sqrt(n()), 1)) %>% as.data.frame())
 }
 
 # --- 5. Size-frequency distributions (5-mm classes, pooled) -----------------
