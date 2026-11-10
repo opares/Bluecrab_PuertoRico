@@ -46,7 +46,7 @@ data/clean/
 File	Rows	Description
 crabdata_clean_2.csv	
 **Use this file.**
-349 crabs	One row per crab: crab_id, event_id, survey, date_catch, station, species, sex, maturity, carapace width spine-to-spine (cw_spines_mm) and base-to-base (cw_base_mm), carapace_length_mm, abdomen_width_mm, weight_g, ovary and egg data (ovary_weight_g, ovary_stage, egg_stage, prior_spawn), derived repro_state and spawning_capable, and a data_note column recording, for example, the six females that could not be dissected in the field. 
+349 crabs	One row per crab: crab_id, event_id, survey, date_catch, station, species, sex, maturity (with maturity_source: recorded in the field, or assigned), carapace width spine-to-spine (cw_spines_mm) and base-to-base (cw_base_mm), carapace_length_mm, abdomen_width_mm, weight_g, ovary and egg data (ovary_weight_g, ovary_stage, egg_stage, prior_spawn), derived repro_state and spawning_capable, and a data_note column recording, for example, the six females that could not be dissected in the field. 
 
 sampling_events_final_clean_2.csv	
 ** Use this file.**
@@ -114,7 +114,7 @@ figures/ contains the nine main-text figures, numbered as in the manuscript:
 
 Notes on the data
 Six females were not dissected because field time ran out; they are retained in crabdata_clean_2.csv with a data_note and excluded from the reproductive-state analyses.
-Seven crabs were recorded as immature; maturity was not recorded for 63 crabs.
+Seven crabs were recorded as immature. A blank maturity field means the crab was mature and the label was not written down: the 69 crabs with a blank maturity field (62 of them in the four main species) are labelled mature in data/clean/, with maturity_source = "assigned" (all are 82 mm CW or larger, and 13 were carrying eggs). The one exception is CR069, a 43-mm C. sapidus male far below adult size, which is left unlabelled (maturity_source = "not recorded").
 Sonde readings are missing for AP and IM on 20 Jan 2021, pH for DY on 20 Oct 2020, and the whole cast for BC on 15 Oct 2021 (see qc_flags).
 Raw field datasheets are available from the corresponding author on request.
 CR306 (C. sapidus female, 14 Oct 2021, AP): the recorded spine-to-spine width (160.89 mm) was a recording error (the crab's 52.2 mm carapace length, 88.15 mm base width and 76.1 g weight indicate a width near 111 mm), so cw_spines_mm is blank for this crab in data/clean/ and every file built from it. Its other measurements are unchanged and used.

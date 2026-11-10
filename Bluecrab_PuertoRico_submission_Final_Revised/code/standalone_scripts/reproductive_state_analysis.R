@@ -121,10 +121,12 @@ for (sp in levels(fem$species)) {
   if (ncol(tab) < 2) { cat(sp, ": no variation\n"); next }
   cat(sp, ": Fisher p =", signif(fisher.test(tab)$p.value, 2), "\n")
 }
-# (ii) Females of unrecorded maturity: are results the same on coded-mature females only?
-cat("\n--- Sensitivity: recorded-mature females only ---\n")
+# (ii) Females whose maturity was not written down in the field are labelled
+#      mature (maturity_source == "assigned"). Are results the same on females
+#      whose maturity was recorded in the field?
+cat("\n--- Sensitivity: females with maturity recorded in the field only ---\n")
 for (sp in levels(fem$species)) {
-  dat <- filter(fem, species == sp, maturity_coded == "mature")
+  dat <- filter(fem, species == sp, maturity_source == "recorded")
   tab <- with(dat, table(survey, capable)); tab <- tab[rowSums(tab) > 0, , drop = FALSE]
   if (ncol(tab) < 2) { cat(sp, ": n =", nrow(dat), " no variation\n"); next }
   cat(sp, ": n =", nrow(dat), " Fisher p =", signif(fisher.test(tab)$p.value, 2), "\n")
