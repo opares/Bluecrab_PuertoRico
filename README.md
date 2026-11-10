@@ -116,6 +116,7 @@ Six females were not dissected because field time ran out; they are retained in 
 Seven crabs were recorded as immature; maturity was not recorded for 63 crabs.
 Sonde readings are missing for AP and IM on 20 Jan 2021, pH for DY on 20 Oct 2020, and the whole cast for BC on 15 Oct 2021 (see qc_flags).
 Raw field datasheets are available from the corresponding author on request.
-CR306 (C. sapidus female, 14 Oct 2021, AP) has a recorded spine-to-spine width of 160.89 mm, which is implausible for its 52.2 mm carapace length and 76.1 g weight; the weight–length script sets this width to NA and keeps the crab's length and weight.
+CR306 (C. sapidus female, 14 Oct 2021, AP): the recorded spine-to-spine width (160.89 mm) was a recording error (the crab's 52.2 mm carapace length, 88.15 mm base width and 76.1 g weight indicate a width near 111 mm), so cw_spines_mm is blank for this crab in data/clean/ and every file built from it. Its other measurements are unchanged and used.
+In the C. sapidus size model (size_analysis.R) the station–survey random intercept is estimated at zero (LRT p = 0.95), so that species' model is fitted without it; C. bocourti keeps the mixed model.
 
 
